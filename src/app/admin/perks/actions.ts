@@ -37,7 +37,10 @@ export async function createPerkAction(formData: FormData) {
     status: "active",
   });
 
-  if (error) return;
+  if (error) {
+    console.error("createPerkAction failed:", error);
+    throw new Error(`Failed to create perk: ${error.message}`);
+  }
   revalidatePath("/admin/perks");
   revalidatePath("/perks");
 }
@@ -51,7 +54,10 @@ export async function updatePerkStatusAction(formData: FormData) {
   if (!id || !isStatus(status)) return;
 
   const { error } = await supabase.from("perks").update({ status }).eq("id", id);
-  if (error) return;
+  if (error) {
+    console.error("updatePerkStatusAction failed:", error);
+    throw new Error(`Failed to update perk status: ${error.message}`);
+  }
 
   revalidatePath("/admin/perks");
   revalidatePath("/perks");

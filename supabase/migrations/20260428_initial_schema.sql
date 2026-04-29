@@ -68,7 +68,7 @@ create table if not exists perks (
 );
 
 create table if not exists site_settings (
-  id uuid primary key default gen_random_uuid(),
+  id text primary key,
   headline text,
   tagline text,
   mission_md text,

@@ -45,7 +45,10 @@ export async function saveSiteSettingsAction(formData: FormData) {
   const { error } = await supabase.from("site_settings").upsert(payload, {
     onConflict: "id",
   });
-  if (error) return;
+  if (error) {
+    console.error("saveSiteSettingsAction failed:", error);
+    throw new Error(`Failed to save site settings: ${error.message}`);
+  }
 
   revalidatePath("/");
   revalidatePath("/about");

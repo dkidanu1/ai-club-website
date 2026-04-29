@@ -33,7 +33,10 @@ export async function createArticleItemAction(formData: FormData) {
     status: "draft",
   });
 
-  if (error) return;
+  if (error) {
+    console.error("createArticleItemAction failed:", error);
+    throw new Error(`Failed to create article: ${error.message}`);
+  }
   revalidatePath("/admin/library");
   revalidatePath("/library");
 }
@@ -60,7 +63,10 @@ export async function createGranolaItemAction(formData: FormData) {
     status: "draft",
   });
 
-  if (error) return;
+  if (error) {
+    console.error("createGranolaItemAction failed:", error);
+    throw new Error(`Failed to create granola note: ${error.message}`);
+  }
   revalidatePath("/admin/library");
   revalidatePath("/library");
 }
@@ -81,7 +87,10 @@ export async function updateLibraryItemStatusAction(formData: FormData) {
     })
     .eq("id", id);
 
-  if (error) return;
+  if (error) {
+    console.error("updateLibraryItemStatusAction failed:", error);
+    throw new Error(`Failed to update library item status: ${error.message}`);
+  }
   revalidatePath("/admin/library");
   revalidatePath("/library");
 }
