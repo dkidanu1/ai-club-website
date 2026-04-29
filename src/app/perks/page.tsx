@@ -1,7 +1,10 @@
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { requireMember } from "@/lib/auth";
 
-export default function PerksPage() {
+export default async function PerksPage() {
+  await requireMember();
+
   return (
     <section className="space-y-6">
       <SectionHeader

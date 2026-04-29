@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { requireOfficer } from "@/lib/auth";
+
 const adminNavItems = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/events", label: "Events" },
@@ -9,11 +11,13 @@ const adminNavItems = [
   { href: "/admin/site-info", label: "Site info" },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const officer = await requireOfficer();
+
   return (
     <section className="space-y-4">
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
@@ -37,7 +41,7 @@ export default function AdminLayout({
             ))}
           </nav>
           <div className="mt-6 border-t border-zinc-200 pt-3 text-sm text-zinc-500">
-            Signed in: Officer
+            Signed in: {officer.full_name ?? officer.email}
           </div>
         </aside>
 

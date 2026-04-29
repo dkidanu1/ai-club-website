@@ -1,5 +1,6 @@
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { requireMember } from "@/lib/auth";
 
 const libraryItems = [
   "▶ Video · Agents at scale — 48 min · Apr 24 · agents, tools",
@@ -8,7 +9,9 @@ const libraryItems = [
   "▶ Video · Robotics demo day recap — 22 min · Apr 11 · robotics",
 ];
 
-export default function LibraryPage() {
+export default async function LibraryPage() {
+  await requireMember();
+
   return (
     <section className="space-y-6">
       <SectionHeader

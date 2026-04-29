@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+
+import { AuthButton } from "@/components/auth-button";
+import { getCurrentMember } from "@/lib/auth";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,11 +21,12 @@ export const metadata: Metadata = {
   description: "Public website and back office for Stanford GSB AI Club.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const member = await getCurrentMember();
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
@@ -48,9 +52,10 @@ export default function RootLayout({
                   {item.label}
                 </Link>
               ))}
-              <button className="rounded-md border border-zinc-300 px-3 py-1.5">
-                Sign in
-              </button>
+              <AuthButton
+                isSignedIn={Boolean(member)}
+                label={member?.full_name?.split(" ")[0] ?? null}
+              />
             </nav>
           </div>
         </header>

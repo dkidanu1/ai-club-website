@@ -2,26 +2,21 @@ import Link from "next/link";
 
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { getPublishedEvents } from "@/lib/supabase/server";
 
-const upcomingEvents = [
-  {
-    slug: "fireside-chat-dr-fei-fei-li",
-    title: "Fireside chat — Dr. Fei-Fei Li",
-    meta: "Tue, May 5 · 6:00 PM · Gates B01 + Zoom · 124 RSVPs",
-  },
-  {
-    slug: "hack-night-building-agents",
-    title: "Hack night: building agents",
-    meta: "Fri, May 9 · 4:00 PM · Huang Center · 41 RSVPs",
-  },
-  {
-    slug: "reading-group-rlhf-papers",
-    title: "Reading group — RLHF papers",
-    meta: "Wed, May 14 · 7:00 PM · Online · 22 RSVPs",
-  },
-];
+function formatEventMeta(startsAt: string, location: string, rsvpCount: number): string {
+  const date = new Date(startsAt).toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${date} · ${location} · ${rsvpCount} RSVPs`;
+}
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const upcomingEvents = await getPublishedEvents();
   return (
     <section className="space-y-6">
       <SectionHeader
@@ -47,7 +42,9 @@ export default function EventsPage() {
         {upcomingEvents.map((event) => (
           <Card key={event.title}>
             <h2 className="font-semibold">{event.title}</h2>
-            <p className="text-sm text-zinc-600">{event.meta}</p>
+            <p className="text-sm text-zinc-600">
+              {formatEventMeta(event.startsAt, event.location, event.rsvpCount)}
+            </p>
             <Link
               href={`/events/${event.slug}`}
               className="mt-3 inline-block text-sm font-medium text-zinc-900 hover:underline"

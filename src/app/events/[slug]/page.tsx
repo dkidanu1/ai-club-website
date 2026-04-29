@@ -1,3 +1,10 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { Card } from "@/components/card";
+import { SectionHeader } from "@/components/section-header";
+import { getEventBySlug } from "@/lib/supabase/server";
+
 type EventDetailPageProps = {
   params: Promise<{
     slug: string;
@@ -6,30 +13,55 @@ type EventDetailPageProps = {
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { slug } = await params;
+  const event = await getEventBySlug(slug);
+
+  if (!event) notFound();
 
   return (
     <section className="space-y-6">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-          Event detail
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight capitalize">
-          {slug.replaceAll("-", " ")}
-        </h1>
-        <p className="mt-2 text-zinc-600">
-          This route is ready for Phase 2 when event data is connected to the
-          database.
-        </p>
-      </div>
+      <SectionHeader
+        eyebrow="Event detail"
+        title={event.title}
+        description={event.description}
+      />
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-semibold">Agenda</h2>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-          <li>6:00 — Doors open + snacks</li>
-          <li>6:15 — Intro from club leads</li>
-          <li>6:25 — Main session + Q&A</li>
+      <Card title="Key facts">
+        <ul className="space-y-1 text-sm text-zinc-600">
+          <li>
+            Date:{" "}
+            {new Date(event.startsAt).toLocaleString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </li>
+          <li>Location: {event.location}</li>
+          <li>
+            RSVPs: {event.rsvpCount}
+            {event.capacity ? `/${event.capacity}` : ""}
+          </li>
         </ul>
-      </div>
+      </Card>
+
+      <Card title="Agenda">
+        <ul className="space-y-2 text-sm text-zinc-600">
+          {event.agenda.length > 0 ? (
+            event.agenda.map((item) => (
+              <li key={`${item.time}-${item.item}`}>
+                {item.time} — {item.item}
+              </li>
+            ))
+          ) : (
+            <li>Agenda will be posted soon.</li>
+          )}
+        </ul>
+      </Card>
+
+      <Link href="/events" className="inline-block text-sm font-medium hover:underline">
+        ← Back to events
+      </Link>
     </section>
   );
 }
