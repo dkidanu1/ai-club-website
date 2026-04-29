@@ -1,13 +1,12 @@
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
 import { createPerkAction, updatePerkStatusAction } from "@/app/admin/perks/actions";
+import { hasSupabasePublicEnv } from "@/lib/supabase/env";
 import { getPerksForAdmin } from "@/lib/supabase/server";
 
 export default async function AdminPerksPage() {
   const perks = await getPerksForAdmin();
-  const isSupabaseConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  const isSupabaseConfigured = hasSupabasePublicEnv();
   const active = perks.filter((perk) => perk.status === "active").length;
   const expiring = perks.filter((perk) => perk.status === "expiring").length;
   const archived = perks.filter((perk) => perk.status === "archived").length;

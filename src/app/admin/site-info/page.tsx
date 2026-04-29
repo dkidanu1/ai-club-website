@@ -1,13 +1,12 @@
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
 import { saveSiteSettingsAction } from "@/app/admin/site-info/actions";
+import { hasSupabasePublicEnv } from "@/lib/supabase/env";
 import { getSiteSettings } from "@/lib/supabase/server";
 
 export default async function AdminSiteInfoPage() {
   const settings = await getSiteSettings();
-  const isSupabaseConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  const isSupabaseConfigured = hasSupabasePublicEnv();
 
   return (
     <section className="space-y-4">

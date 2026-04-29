@@ -7,9 +7,10 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 type AuthButtonProps = {
   isSignedIn: boolean;
   label?: string | null;
+  authEnabled: boolean;
 };
 
-export function AuthButton({ isSignedIn, label }: AuthButtonProps) {
+export function AuthButton({ isSignedIn, label, authEnabled }: AuthButtonProps) {
   const router = useRouter();
 
   const handleSignIn = async () => {
@@ -36,6 +37,14 @@ export function AuthButton({ isSignedIn, label }: AuthButtonProps) {
       >
         Sign out{label ? ` (${label})` : ""}
       </button>
+    );
+  }
+
+  if (!authEnabled) {
+    return (
+      <span className="rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-zinc-600">
+        Dev mode
+      </span>
     );
   }
 

@@ -4,6 +4,7 @@ import { fallbackEvents, toSlug, type EventRecord } from "@/lib/events";
 import { fallbackLibraryItems, type LibraryItemRecord } from "@/lib/library";
 import { fallbackPerks, type PerkRecord } from "@/lib/perks";
 import { fallbackSiteSettings, type SiteSettingsRecord } from "@/lib/site-settings";
+import { getSupabasePublicKey, hasSupabasePublicEnv } from "@/lib/supabase/env";
 
 type DbEvent = {
   id: string;
@@ -20,10 +21,7 @@ type DbEvent = {
 };
 
 function hasSupabaseEnv() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  return hasSupabasePublicEnv();
 }
 
 function mapDbEvent(event: DbEvent): EventRecord {
@@ -53,7 +51,7 @@ export async function getPublishedEvents(): Promise<EventRecord[]> {
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+    getSupabasePublicKey() as string
   );
 
   const { data, error } = await client
@@ -106,7 +104,7 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+    getSupabasePublicKey() as string
   );
 
   const { data, error } = await client
@@ -173,7 +171,7 @@ export async function getPublishedLibraryItems(): Promise<LibraryItemRecord[]> {
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+    getSupabasePublicKey() as string
   );
 
   const { data, error } = await client
@@ -193,7 +191,7 @@ export async function getLibraryItemsForAdmin(): Promise<LibraryItemRecord[]> {
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+    getSupabasePublicKey() as string
   );
 
   const { data, error } = await client
@@ -258,7 +256,7 @@ export async function getActivePerksForMembers(): Promise<PerkRecord[]> {
       : await (async () => {
           const client = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+            getSupabasePublicKey() as string
           );
           const { data, error } = await client
             .from("perks")
@@ -278,7 +276,7 @@ export async function getPerksForAdmin(): Promise<PerkRecord[]> {
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+    getSupabasePublicKey() as string
   );
 
   const { data, error } = await client
@@ -314,7 +312,7 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
 
   const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+    getSupabasePublicKey() as string
   );
 
   const { data, error } = await client

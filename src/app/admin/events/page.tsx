@@ -5,6 +5,7 @@ import {
   updateEventDetailsAction,
   updateEventStatusAction,
 } from "@/app/admin/events/actions";
+import { hasSupabasePublicEnv } from "@/lib/supabase/env";
 import { getEventsForAdmin } from "@/lib/supabase/server";
 
 const statuses = ["draft", "published", "past", "cancelled"] as const;
@@ -17,9 +18,7 @@ const eventTypeOptions = [
 
 export default async function AdminEventsPage() {
   const events = await getEventsForAdmin();
-  const isSupabaseConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  const isSupabaseConfigured = hasSupabasePublicEnv();
 
   return (
     <section className="space-y-4">

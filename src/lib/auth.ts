@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { hasSupabasePublicEnv } from "@/lib/supabase/env";
 
 export type MemberProfile = {
   id: string;
@@ -10,10 +11,7 @@ export type MemberProfile = {
 };
 
 function isAuthConfigured(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  return hasSupabasePublicEnv() && process.env.NEXT_PUBLIC_ENABLE_SUPABASE_AUTH === "true";
 }
 
 export async function getCurrentMember(): Promise<MemberProfile | null> {

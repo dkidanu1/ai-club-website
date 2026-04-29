@@ -27,6 +27,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const member = await getCurrentMember();
+  const authEnabled = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_AUTH === "true";
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
@@ -55,6 +56,7 @@ export default async function RootLayout({
               <AuthButton
                 isSignedIn={Boolean(member)}
                 label={member?.full_name?.split(" ")[0] ?? null}
+                authEnabled={authEnabled}
               />
             </nav>
           </div>
