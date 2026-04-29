@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { AuthBanner } from "@/components/auth-banner";
 import { AuthButton } from "@/components/auth-button";
 import { getCurrentMember } from "@/lib/auth";
 import "./globals.css";
@@ -61,7 +63,12 @@ export default async function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 space-y-4 px-4 py-8">
+          <Suspense fallback={null}>
+            <AuthBanner />
+          </Suspense>
+          {children}
+        </main>
         <footer className="border-t border-zinc-200 bg-white">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
             <p>© 2026 AI Club</p>

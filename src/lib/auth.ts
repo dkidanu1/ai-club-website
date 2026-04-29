@@ -44,12 +44,14 @@ export async function getCurrentMember(): Promise<MemberProfile | null> {
 
 export async function requireMember() {
   const member = await getCurrentMember();
-  if (!member) redirect("/");
+  if (!member) redirect("/?auth_required=1");
   return member;
 }
 
 export async function requireOfficer() {
   const member = await requireMember();
-  if (member.role !== "officer" && member.role !== "president") redirect("/");
+  if (member.role !== "officer" && member.role !== "president") {
+    redirect("/?auth_error=not_officer");
+  }
   return member;
 }

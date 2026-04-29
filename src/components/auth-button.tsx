@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -11,31 +12,52 @@ type AuthButtonProps = {
 };
 
 export function AuthButton({ isSignedIn, label, authEnabled }: AuthButtonProps) {
-  const router = useRouter();
+  const pathname = usePathname();
+  const [pending, setPending] = useState(false);
 
   const handleSignIn = async () => {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    setPending(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const next = encodeURIComponent(pathname || "/");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${next}`,
+          queryParams: { hd: "stanford.edu", prompt: "select_account" },
+        },
+      });
+      if (error) {
+        console.error("Sign-in failed:", error);
+        setPending(false);
+      }
+      // On success the browser is redirected to Google; no need to clear pending.
+    } catch (err) {
+      console.error("Sign-in error:", err);
+      setPending(false);
+    }
   };
 
   const handleSignOut = async () => {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
-    router.refresh();
+    setPending(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } finally {
+      // Hard reload so all server-rendered data is re-fetched without auth.
+      window.location.href = "/";
+    }
   };
 
   if (isSignedIn) {
     return (
       <button
+        type="button"
         onClick={handleSignOut}
-        className="rounded-md border border-zinc-300 px-3 py-1.5"
+        disabled={pending}
+        className="rounded-md border border-zinc-300 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Sign out{label ? ` (${label})` : ""}
+        {pending ? "Signing out…" : `Sign out${label ? ` (${label})` : ""}`}
       </button>
     );
   }
@@ -50,10 +72,12 @@ export function AuthButton({ isSignedIn, label, authEnabled }: AuthButtonProps) 
 
   return (
     <button
+      type="button"
       onClick={handleSignIn}
-      className="rounded-md border border-zinc-300 px-3 py-1.5"
+      disabled={pending}
+      className="rounded-md border border-zinc-300 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      Sign in
+      {pending ? "Redirecting…" : "Sign in"}
     </button>
   );
 }
