@@ -69,7 +69,8 @@ export default function Home() {
 
         <Card title="Featured this week" className="lg:col-span-8">
           <p className="text-sm text-zinc-600">
-            New article: "What we learned hosting 30 events" by Priya · 6 min.
+            New article: &quot;What we learned hosting 30 events&quot; by Priya · 6
+            min.
           </p>
         </Card>
 
