@@ -1,16 +1,13 @@
+import Link from "next/link";
+
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
 import { requireMember } from "@/lib/auth";
-
-const libraryItems = [
-  "▶ Video · Agents at scale — 48 min · Apr 24 · agents, tools",
-  "≡ Granola · LLM internals transcript — 12k words · Apr 18 · llms",
-  "📄 Article · Eval beyond benchmarks — 6 min · Apr 16 · eval",
-  "▶ Video · Robotics demo day recap — 22 min · Apr 11 · robotics",
-];
+import { getPublishedLibraryItems } from "@/lib/supabase/server";
 
 export default async function LibraryPage() {
   await requireMember();
+  const items = await getPublishedLibraryItems();
 
   return (
     <section className="space-y-6">
@@ -32,9 +29,37 @@ export default async function LibraryPage() {
           ))}
         </div>
         <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-          {libraryItems.map((item) => (
-            <li key={item}>{item}</li>
+          {items.map((item) => (
+            <li key={item.id} className="rounded-md border border-zinc-200 p-3">
+              <p className="font-medium text-zinc-900">
+                {item.type === "granola" ? "≡ " : "📄 "}
+                {item.title}
+              </p>
+              <p>{item.excerpt}</p>
+              <p className="mt-1 text-xs">
+                {item.tags.join(", ") || "untagged"}
+                {item.wordCount ? ` · ${item.wordCount} words` : ""}
+              </p>
+              {item.type === "article" && item.externalUrl ? (
+                <a
+                  href={item.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block font-medium text-zinc-900 hover:underline"
+                >
+                  Open article →
+                </a>
+              ) : (
+                <Link
+                  href={`/library/${item.slug}`}
+                  className="mt-2 inline-block font-medium text-zinc-900 hover:underline"
+                >
+                  Open transcript →
+                </Link>
+              )}
+            </li>
           ))}
+          {items.length === 0 ? <li>No published items yet.</li> : null}
         </ul>
       </Card>
     </section>

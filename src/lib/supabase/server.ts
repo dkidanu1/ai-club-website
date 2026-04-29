@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 import { fallbackEvents, toSlug, type EventRecord } from "@/lib/events";
+import { fallbackLibraryItems, type LibraryItemRecord } from "@/lib/library";
+import { fallbackPerks, type PerkRecord } from "@/lib/perks";
 
 type DbEvent = {
   id: string;
@@ -132,4 +134,157 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
         item: entry.item ?? "",
       })) ?? [],
   }));
+}
+
+type DbLibraryItem = {
+  id: string;
+  title: string;
+  type: "granola" | "article";
+  full_text: string | null;
+  word_count: number | null;
+  external_url: string | null;
+  source_name: string | null;
+  excerpt: string | null;
+  tags: string[] | null;
+  status: "draft" | "published";
+  published_at: string | null;
+};
+
+function mapDbLibraryItem(item: DbLibraryItem): LibraryItemRecord {
+  return {
+    id: item.id,
+    slug: toSlug(item.title),
+    title: item.title,
+    type: item.type,
+    excerpt: item.excerpt ?? "No excerpt yet.",
+    fullText: item.full_text,
+    wordCount: item.word_count,
+    externalUrl: item.external_url,
+    sourceName: item.source_name,
+    tags: item.tags ?? [],
+    status: item.status,
+    publishedAt: item.published_at,
+  };
+}
+
+export async function getPublishedLibraryItems(): Promise<LibraryItemRecord[]> {
+  if (!hasSupabaseEnv()) return fallbackLibraryItems;
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+
+  const { data, error } = await client
+    .from("library_items")
+    .select(
+      "id,title,type,full_text,word_count,external_url,source_name,excerpt,tags,status,published_at"
+    )
+    .eq("status", "published")
+    .order("published_at", { ascending: false, nullsFirst: false });
+
+  if (error || !data) return fallbackLibraryItems;
+  return (data as DbLibraryItem[]).map(mapDbLibraryItem);
+}
+
+export async function getLibraryItemsForAdmin(): Promise<LibraryItemRecord[]> {
+  if (!hasSupabaseEnv()) return fallbackLibraryItems;
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+
+  const { data, error } = await client
+    .from("library_items")
+    .select(
+      "id,title,type,full_text,word_count,external_url,source_name,excerpt,tags,status,published_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return (data as DbLibraryItem[]).map(mapDbLibraryItem);
+}
+
+export async function getLibraryItemBySlug(
+  slug: string
+): Promise<LibraryItemRecord | null> {
+  const items = await getPublishedLibraryItems();
+  return items.find((item) => item.slug === slug) ?? null;
+}
+
+type DbPerk = {
+  id: string;
+  partner_name: string;
+  category: "api" | "compute" | "tools" | "learning";
+  offer: string;
+  code: string;
+  redemption_url: string | null;
+  expires_at: string | null;
+  member_notes: string | null;
+  status: "active" | "expiring" | "archived";
+};
+
+function resolvePerkStatus(perk: DbPerk): "active" | "expiring" | "archived" {
+  if (!perk.expires_at) return perk.status;
+
+  const now = Date.now();
+  const expiry = new Date(perk.expires_at).getTime();
+  if (Number.isNaN(expiry)) return perk.status;
+  if (expiry < now) return "archived";
+  if (expiry - now <= 1000 * 60 * 60 * 24 * 30) return "expiring";
+  return perk.status === "archived" ? "active" : perk.status;
+}
+
+function mapDbPerk(perk: DbPerk): PerkRecord {
+  return {
+    id: perk.id,
+    partnerName: perk.partner_name,
+    category: perk.category,
+    offer: perk.offer,
+    code: perk.code,
+    redemptionUrl: perk.redemption_url,
+    expiresAt: perk.expires_at,
+    memberNotes: perk.member_notes,
+    status: resolvePerkStatus(perk),
+  };
+}
+
+export async function getActivePerksForMembers(): Promise<PerkRecord[]> {
+  const base =
+    !hasSupabaseEnv()
+      ? fallbackPerks
+      : await (async () => {
+          const client = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+          );
+          const { data, error } = await client
+            .from("perks")
+            .select(
+              "id,partner_name,category,offer,code,redemption_url,expires_at,member_notes,status"
+            )
+            .order("expires_at", { ascending: true, nullsFirst: false });
+          if (error || !data) return fallbackPerks;
+          return (data as DbPerk[]).map(mapDbPerk);
+        })();
+
+  return base.filter((perk) => perk.status !== "archived");
+}
+
+export async function getPerksForAdmin(): Promise<PerkRecord[]> {
+  if (!hasSupabaseEnv()) return fallbackPerks;
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+
+  const { data, error } = await client
+    .from("perks")
+    .select("id,partner_name,category,offer,code,redemption_url,expires_at,member_notes,status")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return (data as DbPerk[]).map(mapDbPerk);
 }
