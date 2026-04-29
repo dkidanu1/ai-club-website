@@ -6,6 +6,7 @@ export type EventRecord = {
   location: string;
   rsvpCount: number;
   capacity: number | null;
+  rsvpUrl: string | null;
   eventType: "talk" | "hack" | "reading" | "social";
   description: string;
   agenda: Array<{ time: string; item: string }>;
@@ -20,6 +21,7 @@ export const fallbackEvents: EventRecord[] = [
     location: "Gates B01 + Zoom",
     rsvpCount: 124,
     capacity: 180,
+    rsvpUrl: null,
     eventType: "talk",
     description:
       "On building visual intelligence, from ImageNet to embodied agents.",
@@ -37,6 +39,7 @@ export const fallbackEvents: EventRecord[] = [
     location: "Huang Center",
     rsvpCount: 41,
     capacity: 100,
+    rsvpUrl: null,
     eventType: "hack",
     description: "Build and demo practical agent workflows in teams.",
     agenda: [
@@ -53,6 +56,7 @@ export const fallbackEvents: EventRecord[] = [
     location: "Online",
     rsvpCount: 22,
     capacity: null,
+    rsvpUrl: null,
     eventType: "reading",
     description: "Discuss key RLHF papers and practical takeaways.",
     agenda: [

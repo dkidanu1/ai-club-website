@@ -27,6 +27,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
       <Card title="Key facts">
         <ul className="space-y-1 text-sm text-zinc-600">
+          <li>Type: {event.eventType}</li>
           <li>
             Date:{" "}
             {new Date(event.startsAt).toLocaleString("en-US", {
@@ -42,6 +43,19 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             RSVPs: {event.rsvpCount}
             {event.capacity ? `/${event.capacity}` : ""}
           </li>
+          {event.rsvpUrl ? (
+            <li>
+              RSVP link:{" "}
+              <a
+                href={event.rsvpUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-zinc-900 hover:underline"
+              >
+                Register
+              </a>
+            </li>
+          ) : null}
         </ul>
       </Card>
 
