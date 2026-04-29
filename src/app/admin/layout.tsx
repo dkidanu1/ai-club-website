@@ -24,29 +24,27 @@ export default async function AdminLayout({
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
           Back office
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">AI Club Admin</h1>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">AI Club Admin</h1>
+          <p className="text-sm text-zinc-500">Signed in: {officer.full_name ?? officer.email}</p>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-        <aside className="rounded-xl border border-zinc-200 bg-white p-3">
-          <nav className="space-y-1">
-            {adminNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-6 border-t border-zinc-200 pt-3 text-sm text-zinc-500">
-            Signed in: {officer.full_name ?? officer.email}
-          </div>
-        </aside>
+      <nav className="rounded-xl border border-zinc-200 bg-white p-3">
+        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {adminNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-center text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
 
-        <div className="space-y-4">{children}</div>
-      </div>
+      <div className="space-y-4">{children}</div>
     </section>
   );
 }

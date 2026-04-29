@@ -8,6 +8,12 @@ import {
 import { getEventsForAdmin } from "@/lib/supabase/server";
 
 const statuses = ["draft", "published", "past", "cancelled"] as const;
+const eventTypeOptions = [
+  { value: "talk", label: "Fireside Chat" },
+  { value: "hack", label: "Company Visit" },
+  { value: "reading", label: "Major Event" },
+  { value: "social", label: "Community Event" },
+] as const;
 
 export default async function AdminEventsPage() {
   const events = await getEventsForAdmin();
@@ -20,7 +26,7 @@ export default async function AdminEventsPage() {
       <SectionHeader
         eyebrow="Admin / Events"
         title="Events manager"
-        description="Create and publish events from admin. These records now power the public events pages."
+        description="Club leadership can create, edit, and publish events manually from this dashboard."
       />
 
       <Card title="Create new event">
@@ -52,10 +58,11 @@ export default async function AdminEventsPage() {
             defaultValue="talk"
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm"
           >
-            <option value="talk">Talk</option>
-            <option value="hack">Hack night</option>
-            <option value="reading">Reading group</option>
-            <option value="social">Social</option>
+            {eventTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <select
             name="status"
@@ -145,10 +152,11 @@ export default async function AdminEventsPage() {
                   disabled={!isSupabaseConfigured}
                   className="rounded-md border border-zinc-300 px-2 py-1 text-xs disabled:bg-zinc-100"
                 >
-                  <option value="talk">Talk</option>
-                  <option value="hack">Hack night</option>
-                  <option value="reading">Reading group</option>
-                  <option value="social">Social</option>
+                  {eventTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
                 <input
                   name="rsvpCount"

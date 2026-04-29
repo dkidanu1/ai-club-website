@@ -1,5 +1,6 @@
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { getSiteSettings } from "@/lib/supabase/server";
 
 const officers = [
   "Priya Kumar — President",
@@ -8,18 +9,21 @@ const officers = [
   "Sam Park — VP Partners",
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getSiteSettings();
+
   return (
     <section className="space-y-6">
       <SectionHeader
         title="About AI Club"
-        description="Founded in 2022. Open to all Stanford students. We host weekly events, run reading groups, and ship side projects together."
+        description={settings.mission}
         eyebrow="About / Team"
       />
 
       <Card title="Club stats">
         <p className="text-sm text-zinc-600">
-          240 members · 38 events hosted · 12 partners · 1.2k newsletter readers
+          {settings.stats.members} members · {settings.stats.events} events hosted ·{" "}
+          {settings.stats.partners} partners · {settings.stats.newsletter} newsletter readers
         </p>
       </Card>
 
@@ -33,9 +37,9 @@ export default function AboutPage() {
 
       <Card title="Get in touch">
         <ul className="space-y-1 text-sm text-zinc-600">
-          <li>hello@aiclub</li>
-          <li>discord.gg/aiclub</li>
-          <li>@stanford.aiclub</li>
+          <li>{settings.email}</li>
+          <li>{settings.discordUrl}</li>
+          <li>{settings.instagramHandle}</li>
         </ul>
       </Card>
     </section>

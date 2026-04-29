@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { fallbackEvents, toSlug, type EventRecord } from "@/lib/events";
 import { fallbackLibraryItems, type LibraryItemRecord } from "@/lib/library";
 import { fallbackPerks, type PerkRecord } from "@/lib/perks";
+import { fallbackSiteSettings, type SiteSettingsRecord } from "@/lib/site-settings";
 
 type DbEvent = {
   id: string;
@@ -287,4 +288,59 @@ export async function getPerksForAdmin(): Promise<PerkRecord[]> {
 
   if (error || !data) return [];
   return (data as DbPerk[]).map(mapDbPerk);
+}
+
+type DbSiteSettings = {
+  id: string;
+  headline: string | null;
+  tagline: string | null;
+  mission_md: string | null;
+  email: string | null;
+  discord_url: string | null;
+  instagram_handle: string | null;
+  calendar_feed_url: string | null;
+  stats:
+    | {
+        members?: number;
+        events?: number;
+        partners?: number;
+        newsletter?: string;
+      }
+    | null;
+};
+
+export async function getSiteSettings(): Promise<SiteSettingsRecord> {
+  if (!hasSupabaseEnv()) return fallbackSiteSettings;
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+
+  const { data, error } = await client
+    .from("site_settings")
+    .select(
+      "id,headline,tagline,mission_md,email,discord_url,instagram_handle,calendar_feed_url,stats"
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return fallbackSiteSettings;
+
+  const row = data as DbSiteSettings;
+  return {
+    headline: row.headline ?? fallbackSiteSettings.headline,
+    tagline: row.tagline ?? fallbackSiteSettings.tagline,
+    mission: row.mission_md ?? fallbackSiteSettings.mission,
+    email: row.email ?? fallbackSiteSettings.email,
+    discordUrl: row.discord_url ?? fallbackSiteSettings.discordUrl,
+    instagramHandle: row.instagram_handle ?? fallbackSiteSettings.instagramHandle,
+    calendarFeedUrl: row.calendar_feed_url ?? fallbackSiteSettings.calendarFeedUrl,
+    stats: {
+      members: row.stats?.members ?? fallbackSiteSettings.stats.members,
+      events: row.stats?.events ?? fallbackSiteSettings.stats.events,
+      partners: row.stats?.partners ?? fallbackSiteSettings.stats.partners,
+      newsletter: row.stats?.newsletter ?? fallbackSiteSettings.stats.newsletter,
+    },
+  };
 }

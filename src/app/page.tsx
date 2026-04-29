@@ -1,6 +1,9 @@
 import { Card } from "@/components/card";
+import { getSiteSettings } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const settings = await getSiteSettings();
+
   return (
     <section className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-12">
@@ -9,10 +12,10 @@ export default function Home() {
             Welcome / Hero
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            Stanford AI Club.
+            {settings.headline}
           </h1>
           <p className="mt-2 max-w-xl text-zinc-600">
-            A community building, learning, and arguing about AI together.
+            {settings.tagline}
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">
             <button className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white">
@@ -26,7 +29,8 @@ export default function Home() {
             </button>
           </div>
           <p className="mt-4 text-sm text-zinc-600">
-            240 members · 38 past events · 12 partners
+            {settings.stats.members} members · {settings.stats.events} past events ·{" "}
+            {settings.stats.partners} partners
           </p>
         </Card>
 
