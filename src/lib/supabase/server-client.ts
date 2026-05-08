@@ -15,9 +15,15 @@ export async function createSupabaseServerClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // setAll was called from a Server Component, which can't
+          // mutate cookies. Safe to ignore — the session will be
+          // refreshed on the next Server Action or Route Handler call.
+        }
       },
     },
   });

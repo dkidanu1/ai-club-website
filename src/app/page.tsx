@@ -1,15 +1,30 @@
+import Link from "next/link";
+
 import { Card } from "@/components/card";
-import { getSiteSettings } from "@/lib/supabase/server";
+import { JoinClubButton } from "@/components/join-club-button";
+import { OfficerTile } from "@/components/officer-tile";
+import { getCurrentMember } from "@/lib/auth";
+import {
+  getOfficers,
+  getSiteSettings,
+  getUpcomingEvents,
+} from "@/lib/supabase/server";
 
 export default async function Home() {
-  const settings = await getSiteSettings();
+  const [settings, member, officers, upcoming] = await Promise.all([
+    getSiteSettings(),
+    getCurrentMember(),
+    getOfficers(),
+    getUpcomingEvents(3),
+  ]);
+  const authEnabled = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_AUTH === "true";
 
   return (
     <section className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-7">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Welcome / Hero
+            Welcome
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
             {settings.headline}
@@ -18,15 +33,7 @@ export default async function Home() {
             {settings.tagline}
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">
-            <button className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white">
-              Join the club
-            </button>
-            <button className="rounded-md border border-zinc-300 px-4 py-2 font-medium">
-              See next event
-            </button>
-            <button className="rounded-md border border-zinc-300 px-4 py-2 font-medium">
-              Browse library
-            </button>
+            <JoinClubButton isSignedIn={Boolean(member)} authEnabled={authEnabled} />
           </div>
           <p className="mt-4 text-sm text-zinc-600">
             {settings.stats.members} members · {settings.stats.events} past events ·{" "}
@@ -34,18 +41,77 @@ export default async function Home() {
           </p>
         </Card>
 
-        <Card title="Team photo" className="lg:col-span-5">
-          <div className="grid h-40 place-items-center rounded-md border border-dashed border-zinc-300 text-sm text-zinc-500">
-            Photo placeholder
-          </div>
-          <p className="mt-3 text-sm text-zinc-600">Meet the team →</p>
+        <Card title="Team" className="lg:col-span-5">
+          {officers.length === 0 ? (
+            <p className="text-sm text-zinc-600">No officers listed yet.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {officers.map((officer) => (
+                <OfficerTile key={officer.id} officer={officer} />
+              ))}
+            </div>
+          )}
+          <Link
+            href="/about"
+            className="mt-3 inline-block text-sm text-zinc-600 hover:underline"
+          >
+            Meet the team →
+          </Link>
         </Card>
 
         <Card title="Upcoming events" className="lg:col-span-4">
-          <ul className="space-y-3 text-sm text-zinc-600">
-            <li>Tue · May 5 · Fireside w/ Dr. Fei-Fei · Register</li>
-            <li>Fri · May 9 · Hack night: agents · Register</li>
-          </ul>
+          {upcoming.length === 0 ? (
+            <p className="text-sm text-zinc-600">No upcoming events scheduled.</p>
+          ) : (
+            <ul className="space-y-3 text-sm">
+              {upcoming.map((event) => {
+                const date = new Date(event.startsAt);
+                const dateLabel = date.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                });
+                const guestLine = [event.guestName, event.guestCompany]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <li key={event.id} className="text-zinc-600">
+                    <p>
+                      <span className="font-medium text-zinc-700">{dateLabel}</span>
+                      {" · "}
+                      <Link href={`/events/${event.slug}`} className="hover:underline">
+                        {event.title}
+                      </Link>
+                      {event.status === "cancelled" ? (
+                        <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-800">
+                          Cancelled
+                        </span>
+                      ) : null}
+                    </p>
+                    {guestLine ? (
+                      <p className="text-xs text-zinc-600">{guestLine}</p>
+                    ) : null}
+                    {event.rsvpUrl && event.status !== "cancelled" ? (
+                      <a
+                        href={event.rsvpUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-brand-red underline-offset-2 hover:underline"
+                      >
+                        Register →
+                      </a>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <Link
+            href="/events"
+            className="mt-3 inline-block text-sm text-zinc-600 hover:underline"
+          >
+            See all events →
+          </Link>
         </Card>
 
         <Card title="Knowledge library" className="lg:col-span-4">

@@ -45,6 +45,7 @@ export function CreateEventForm({ disabled }: Props) {
       </div>
 
       <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-zinc-600">Start time</label>
         <input
           name="startsAt"
           required
@@ -54,6 +55,19 @@ export function CreateEventForm({ disabled }: Props) {
         />
         {fieldError("startsAt") ? (
           <p className="text-xs text-red-600">{fieldError("startsAt")}</p>
+        ) : null}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-zinc-600">End time (optional)</label>
+        <input
+          name="endsAt"
+          type="datetime-local"
+          aria-invalid={Boolean(fieldError("endsAt"))}
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm aria-[invalid=true]:border-red-500"
+        />
+        {fieldError("endsAt") ? (
+          <p className="text-xs text-red-600">{fieldError("endsAt")}</p>
         ) : null}
       </div>
 

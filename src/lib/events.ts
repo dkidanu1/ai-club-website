@@ -1,15 +1,31 @@
+export type EventStatus = "draft" | "published" | "past" | "cancelled";
+export type EventType = "talk" | "hack" | "reading" | "social";
+
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  talk: "Fireside Chat",
+  hack: "Company Visit",
+  reading: "Major Event",
+  social: "Community Event",
+};
+
 export type EventRecord = {
   id: string;
   slug: string;
   title: string;
   startsAt: string;
+  endsAt: string | null;
   location: string;
   rsvpCount: number;
   capacity: number | null;
   rsvpUrl: string | null;
-  eventType: "talk" | "hack" | "reading" | "social";
+  eventType: EventType;
   description: string;
   agenda: Array<{ time: string; item: string }>;
+  guestName: string | null;
+  guestCompany: string | null;
+  status: EventStatus;
+  summary: string | null;
+  photoUrl: string | null;
 };
 
 export const fallbackEvents: EventRecord[] = [
@@ -22,6 +38,12 @@ export const fallbackEvents: EventRecord[] = [
     rsvpCount: 124,
     capacity: 180,
     rsvpUrl: null,
+    guestName: null,
+    guestCompany: null,
+    endsAt: null,
+    status: "published",
+    summary: null,
+    photoUrl: null,
     eventType: "talk",
     description:
       "On building visual intelligence, from ImageNet to embodied agents.",
@@ -40,6 +62,12 @@ export const fallbackEvents: EventRecord[] = [
     rsvpCount: 41,
     capacity: 100,
     rsvpUrl: null,
+    guestName: null,
+    guestCompany: null,
+    endsAt: null,
+    status: "published",
+    summary: null,
+    photoUrl: null,
     eventType: "hack",
     description: "Build and demo practical agent workflows in teams.",
     agenda: [
@@ -57,6 +85,12 @@ export const fallbackEvents: EventRecord[] = [
     rsvpCount: 22,
     capacity: null,
     rsvpUrl: null,
+    guestName: null,
+    guestCompany: null,
+    endsAt: null,
+    status: "published",
+    summary: null,
+    photoUrl: null,
     eventType: "reading",
     description: "Discuss key RLHF papers and practical takeaways.",
     agenda: [

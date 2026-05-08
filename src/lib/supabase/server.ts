@@ -10,6 +10,7 @@ type DbEvent = {
   id: string;
   title: string;
   starts_at: string;
+  ends_at: string | null;
   location: string | null;
   rsvp_count: number | null;
   capacity: number | null;
@@ -18,6 +19,10 @@ type DbEvent = {
   description_md: string | null;
   agenda: Array<{ time?: string; item?: string }> | null;
   status: "draft" | "published" | "past" | "cancelled";
+  guest_name: string | null;
+  guest_company: string | null;
+  summary: string | null;
+  photo_url: string | null;
 };
 
 function hasSupabaseEnv() {
@@ -30,6 +35,7 @@ function mapDbEvent(event: DbEvent): EventRecord {
     slug: toSlug(event.title),
     title: event.title,
     startsAt: event.starts_at,
+    endsAt: event.ends_at,
     location: event.location ?? "TBD",
     rsvpCount: event.rsvp_count ?? 0,
     capacity: event.capacity,
@@ -43,6 +49,11 @@ function mapDbEvent(event: DbEvent): EventRecord {
         time: entry.time ?? "TBD",
         item: entry.item ?? "Details coming soon",
       })) ?? [],
+    guestName: event.guest_name,
+    guestCompany: event.guest_company,
+    status: event.status,
+    summary: event.summary,
+    photoUrl: event.photo_url,
   };
 }
 
@@ -57,9 +68,9 @@ export async function getPublishedEvents(): Promise<EventRecord[]> {
   const { data, error } = await client
     .from("events")
     .select(
-      "id,title,starts_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status"
+      "id,title,starts_at,ends_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status,guest_name,guest_company,summary,photo_url"
     )
-    .in("status", ["published", "past"])
+    .in("status", ["published", "past", "cancelled"])
     .order("starts_at", { ascending: true });
 
   if (error || !data) return fallbackEvents;
@@ -71,18 +82,43 @@ export async function getEventBySlug(slug: string): Promise<EventRecord | null> 
   return events.find((event) => event.slug === slug) ?? null;
 }
 
+export async function getUpcomingEvents(limit = 5): Promise<EventRecord[]> {
+  if (!hasSupabaseEnv()) return [];
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    getSupabasePublicKey() as string
+  );
+
+  const { data, error } = await client
+    .from("events")
+    .select(
+      "id,title,starts_at,ends_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status,guest_name,guest_company,summary,photo_url"
+    )
+    .in("status", ["published", "past", "cancelled"])
+    .gte("starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return (data as DbEvent[]).map(mapDbEvent);
+}
+
 export type AdminEventRecord = {
   id: string;
   title: string;
   startsAt: string;
+  endsAt: string | null;
   location: string;
   eventType: "talk" | "hack" | "reading" | "social";
   status: "draft" | "published" | "past" | "cancelled";
-  rsvpCount: number;
-  capacity: number | null;
   rsvpUrl: string | null;
   description: string;
   agenda: Array<{ time: string; item: string }>;
+  guestName: string | null;
+  guestCompany: string | null;
+  summary: string | null;
+  photoUrl: string | null;
 };
 
 export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
@@ -91,14 +127,17 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
       id: event.id,
       title: event.title,
       startsAt: event.startsAt,
+      endsAt: event.endsAt,
       location: event.location,
       eventType: event.eventType,
       status: "published",
-      rsvpCount: event.rsvpCount,
-      capacity: event.capacity,
       rsvpUrl: event.rsvpUrl,
       description: event.description,
       agenda: event.agenda,
+      guestName: event.guestName,
+      guestCompany: event.guestCompany,
+      summary: event.summary,
+      photoUrl: event.photoUrl,
     }));
   }
 
@@ -110,7 +149,7 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
   const { data, error } = await client
     .from("events")
     .select(
-      "id,title,starts_at,location,event_type,status,rsvp_count,capacity,rsvp_url,description_md,agenda"
+      "id,title,starts_at,ends_at,location,event_type,status,rsvp_count,capacity,rsvp_url,description_md,agenda,guest_name,guest_company,summary,photo_url"
     )
     .order("starts_at", { ascending: false });
 
@@ -120,11 +159,10 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
     id: event.id,
     title: event.title,
     startsAt: event.starts_at,
+    endsAt: event.ends_at,
     location: event.location ?? "TBD",
     eventType: event.event_type,
     status: event.status,
-    rsvpCount: event.rsvp_count ?? 0,
-    capacity: event.capacity,
     rsvpUrl: event.rsvp_url,
     description: event.description_md ?? "",
     agenda:
@@ -132,16 +170,112 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
         time: entry.time ?? "",
         item: entry.item ?? "",
       })) ?? [],
+    guestName: event.guest_name,
+    guestCompany: event.guest_company,
+    summary: event.summary,
+    photoUrl: event.photo_url,
+  }));
+}
+
+type DbOfficer = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+  linkedin_url: string | null;
+  role: "officer" | "president";
+  officer_title: string | null;
+  display_order: number | null;
+};
+
+export type OfficerRecord = {
+  id: string;
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+  linkedinUrl: string | null;
+  role: "officer" | "president";
+  officerTitle: string | null;
+  displayOrder: number;
+};
+
+export async function getOfficers(): Promise<OfficerRecord[]> {
+  if (!hasSupabaseEnv()) return [];
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    getSupabasePublicKey() as string
+  );
+
+  const { data, error } = await client
+    .from("members")
+    .select(
+      "id,full_name,email,avatar_url,linkedin_url,role,officer_title,display_order"
+    )
+    .in("role", ["officer", "president"])
+    .order("display_order", { ascending: true })
+    .order("full_name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return (data as DbOfficer[]).map((row) => ({
+    id: row.id,
+    fullName: row.full_name ?? "",
+    email: row.email,
+    avatarUrl: row.avatar_url,
+    linkedinUrl: row.linkedin_url,
+    role: row.role,
+    officerTitle: row.officer_title,
+    displayOrder: row.display_order ?? 0,
+  }));
+}
+
+export type AdminMemberRecord = {
+  id: string;
+  email: string;
+  fullName: string;
+  avatarUrl: string | null;
+  linkedinUrl: string | null;
+  role: "member" | "officer" | "president";
+  officerTitle: string | null;
+  displayOrder: number;
+};
+
+export async function getMembersForAdmin(): Promise<AdminMemberRecord[]> {
+  if (!hasSupabaseEnv()) return [];
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    getSupabasePublicKey() as string
+  );
+
+  const { data, error } = await client
+    .from("members")
+    .select("id,email,full_name,avatar_url,linkedin_url,role,officer_title,display_order")
+    .order("role", { ascending: true })
+    .order("display_order", { ascending: true })
+    .order("full_name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id,
+    email: row.email,
+    fullName: row.full_name ?? "",
+    avatarUrl: row.avatar_url,
+    linkedinUrl: row.linkedin_url,
+    role: row.role,
+    officerTitle: row.officer_title,
+    displayOrder: row.display_order ?? 0,
   }));
 }
 
 type DbLibraryItem = {
   id: string;
   title: string;
-  type: "granola" | "article";
-  full_text: string | null;
-  word_count: number | null;
+  type: "article" | "video";
   external_url: string | null;
+  image_url: string | null;
   source_name: string | null;
   excerpt: string | null;
   tags: string[] | null;
@@ -155,10 +289,9 @@ function mapDbLibraryItem(item: DbLibraryItem): LibraryItemRecord {
     slug: toSlug(item.title),
     title: item.title,
     type: item.type,
-    excerpt: item.excerpt ?? "No excerpt yet.",
-    fullText: item.full_text,
-    wordCount: item.word_count,
+    excerpt: item.excerpt ?? "",
     externalUrl: item.external_url,
+    imageUrl: item.image_url,
     sourceName: item.source_name,
     tags: item.tags ?? [],
     status: item.status,
@@ -177,7 +310,7 @@ export async function getPublishedLibraryItems(): Promise<LibraryItemRecord[]> {
   const { data, error } = await client
     .from("library_items")
     .select(
-      "id,title,type,full_text,word_count,external_url,source_name,excerpt,tags,status,published_at"
+      "id,title,type,external_url,image_url,source_name,excerpt,tags,status,published_at"
     )
     .eq("status", "published")
     .order("published_at", { ascending: false, nullsFirst: false });
@@ -197,19 +330,12 @@ export async function getLibraryItemsForAdmin(): Promise<LibraryItemRecord[]> {
   const { data, error } = await client
     .from("library_items")
     .select(
-      "id,title,type,full_text,word_count,external_url,source_name,excerpt,tags,status,published_at"
+      "id,title,type,external_url,image_url,source_name,excerpt,tags,status,published_at"
     )
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
   return (data as DbLibraryItem[]).map(mapDbLibraryItem);
-}
-
-export async function getLibraryItemBySlug(
-  slug: string
-): Promise<LibraryItemRecord | null> {
-  const items = await getPublishedLibraryItems();
-  return items.find((item) => item.slug === slug) ?? null;
 }
 
 type DbPerk = {

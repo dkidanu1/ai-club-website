@@ -1,67 +1,133 @@
-import Link from "next/link";
-
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
 import { requireMember } from "@/lib/auth";
+import { getVideoEmbed, type LibraryItemRecord } from "@/lib/library";
 import { getPublishedLibraryItems } from "@/lib/supabase/server";
+
+function ArticleCard({ item }: { item: LibraryItemRecord }) {
+  return (
+    <a
+      href={item.externalUrl ?? "#"}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block overflow-hidden rounded-md border border-zinc-200 bg-white transition hover:border-zinc-400"
+    >
+      {item.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.imageUrl}
+          alt={item.title}
+          className="aspect-video w-full object-cover"
+        />
+      ) : (
+        <div className="grid aspect-video w-full place-items-center bg-zinc-100 text-xs text-zinc-500">
+          No image
+        </div>
+      )}
+      <div className="p-3">
+        <p className="text-[11px] uppercase tracking-wider text-zinc-500">
+          {item.sourceName ?? "Article"}
+        </p>
+        <h3 className="mt-1 font-medium text-zinc-900 group-hover:underline">
+          {item.title}
+        </h3>
+        {item.excerpt ? (
+          <p className="mt-1 line-clamp-3 text-sm text-zinc-600">{item.excerpt}</p>
+        ) : null}
+        {item.tags.length > 0 ? (
+          <p className="mt-2 text-[11px] text-zinc-500">
+            {item.tags.map((t) => `#${t}`).join(" ")}
+          </p>
+        ) : null}
+      </div>
+    </a>
+  );
+}
+
+function VideoCard({ item }: { item: LibraryItemRecord }) {
+  const embed = item.externalUrl ? getVideoEmbed(item.externalUrl) : null;
+  return (
+    <div className="overflow-hidden rounded-md border border-zinc-200 bg-white">
+      {embed ? (
+        <div className="aspect-video w-full">
+          <iframe
+            src={embed.embedUrl}
+            title={item.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="h-full w-full"
+          />
+        </div>
+      ) : (
+        <div className="grid aspect-video w-full place-items-center bg-zinc-100 text-sm text-zinc-600">
+          Video unavailable
+          {item.externalUrl ? (
+            <a
+              href={item.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 text-zinc-700 hover:underline"
+            >
+              Open externally →
+            </a>
+          ) : null}
+        </div>
+      )}
+      <div className="p-3">
+        <h3 className="font-medium text-zinc-900">{item.title}</h3>
+        {item.excerpt ? (
+          <p className="mt-1 line-clamp-3 text-sm text-zinc-600">{item.excerpt}</p>
+        ) : null}
+        {item.tags.length > 0 ? (
+          <p className="mt-2 text-[11px] text-zinc-500">
+            {item.tags.map((t) => `#${t}`).join(" ")}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export default async function LibraryPage() {
   await requireMember();
   const items = await getPublishedLibraryItems();
 
+  const articles = items.filter((item) => item.type === "article");
+  const videos = items.filter((item) => item.type === "video");
+
   return (
     <section className="space-y-6">
       <SectionHeader
         title="Knowledge library"
-        description="Talks, articles, and granola transcripts in one mixed feed."
+        description="Articles we're reading and videos we're watching."
         eyebrow="Library"
       />
 
-      <Card>
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          {["All", "Video", "Article", "Granola", "Newest"].map((filter) => (
-            <span
-              key={filter}
-              className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs"
-            >
-              {filter}
-            </span>
-          ))}
-        </div>
-        <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-          {items.map((item) => (
-            <li key={item.id} className="rounded-md border border-zinc-200 p-3">
-              <p className="font-medium text-zinc-900">
-                {item.type === "granola" ? "≡ " : "📄 "}
-                {item.title}
-              </p>
-              <p>{item.excerpt}</p>
-              <p className="mt-1 text-xs">
-                {item.tags.join(", ") || "untagged"}
-                {item.wordCount ? ` · ${item.wordCount} words` : ""}
-              </p>
-              {item.type === "article" && item.externalUrl ? (
-                <a
-                  href={item.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-block font-medium text-zinc-900 hover:underline"
-                >
-                  Open article →
-                </a>
-              ) : (
-                <Link
-                  href={`/library/${item.slug}`}
-                  className="mt-2 inline-block font-medium text-zinc-900 hover:underline"
-                >
-                  Open transcript →
-                </Link>
-              )}
-            </li>
-          ))}
-          {items.length === 0 ? <li>No published items yet.</li> : null}
-        </ul>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title={`Articles (${articles.length})`}>
+          {articles.length === 0 ? (
+            <p className="text-sm text-zinc-600">No articles yet.</p>
+          ) : (
+            <div className="grid gap-3">
+              {articles.map((item) => (
+                <ArticleCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card title={`Videos (${videos.length})`}>
+          {videos.length === 0 ? (
+            <p className="text-sm text-zinc-600">No videos yet.</p>
+          ) : (
+            <div className="grid gap-3">
+              {videos.map((item) => (
+                <VideoCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
     </section>
   );
 }

@@ -1,16 +1,10 @@
 import { Card } from "@/components/card";
+import { OfficerTile } from "@/components/officer-tile";
 import { SectionHeader } from "@/components/section-header";
-import { getSiteSettings } from "@/lib/supabase/server";
-
-const officers = [
-  "Priya Kumar — President",
-  "Marcus Lee — VP Programming",
-  "Lin Zhao — VP Education",
-  "Sam Park — VP Partners",
-];
+import { getOfficers, getSiteSettings } from "@/lib/supabase/server";
 
 export default async function AboutPage() {
-  const settings = await getSiteSettings();
+  const [settings, officers] = await Promise.all([getSiteSettings(), getOfficers()]);
 
   return (
     <section className="space-y-6">
@@ -27,12 +21,18 @@ export default async function AboutPage() {
         </p>
       </Card>
 
-      <Card title="Officers (2025/26)">
-        <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-          {officers.map((officer) => (
-            <li key={officer}>{officer}</li>
-          ))}
-        </ul>
+      <Card title="Team">
+        {officers.length === 0 ? (
+          <p className="text-sm text-zinc-600">
+            No officers listed yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {officers.map((officer) => (
+              <OfficerTile key={officer.id} officer={officer} />
+            ))}
+          </div>
+        )}
       </Card>
 
       <Card title="Get in touch">

@@ -1,67 +1,34 @@
-import Link from "next/link";
-
-import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { EventsList } from "@/app/events/events-list";
 import { getPublishedEvents } from "@/lib/supabase/server";
 
-function formatEventMeta(startsAt: string, location: string, rsvpCount: number): string {
-  const date = new Date(startsAt).toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${date} · ${location} · ${rsvpCount} RSVPs`;
-}
-
 export default async function EventsPage() {
-  const upcomingEvents = await getPublishedEvents();
+  const allEvents = await getPublishedEvents();
+  const now = new Date().getTime();
+
+  const upcoming = allEvents.filter(
+    (event) => new Date(event.startsAt).getTime() >= now
+  );
+  // Past = explicitly marked past, OR a published/cancelled event whose start
+  // is in the past. Newest first for the past list.
+  const past = allEvents
+    .filter((event) => {
+      const t = new Date(event.startsAt).getTime();
+      return event.status === "past" || t < now;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime()
+    );
+
   return (
     <section className="space-y-6">
       <SectionHeader
-        title="Upcoming events"
-        description="What's on. RSVP early - most events fill up."
+        title="Events"
+        description="What's on, and what we've already done."
         eyebrow="Events"
       />
-
-      <div className="flex flex-wrap gap-2">
-        {["All", "Talks", "Hack nights", "Reading group", "Socials", "In-person", "Online"].map(
-          (filter) => (
-            <span
-              key={filter}
-              className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm"
-            >
-              {filter}
-            </span>
-          )
-        )}
-      </div>
-
-      <div className="space-y-3">
-        {upcomingEvents.map((event) => (
-          <Card key={event.title}>
-            <h2 className="font-semibold">{event.title}</h2>
-            <p className="text-sm text-zinc-600">
-              {formatEventMeta(event.startsAt, event.location, event.rsvpCount)}
-            </p>
-            <Link
-              href={`/events/${event.slug}`}
-              className="mt-3 inline-block text-sm font-medium text-zinc-900 hover:underline"
-            >
-              View details →
-            </Link>
-          </Card>
-        ))}
-      </div>
-
-      <Card title="Past events">
-        <ul className="space-y-2 text-sm text-zinc-600">
-          <li>Apr 24 · LLM internals · video + transcript</li>
-          <li>Apr 18 · Eval workshop · video + transcript</li>
-          <li>Apr 11 · Vision panel · video + transcript</li>
-        </ul>
-      </Card>
+      <EventsList upcoming={upcoming} past={past} />
     </section>
   );
 }
