@@ -41,15 +41,6 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         description={event.description}
       />
 
-      {event.photoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={event.photoUrl}
-          alt={event.title}
-          className="w-full rounded-md border border-zinc-200 object-cover"
-        />
-      ) : null}
-
       <Card title="Key facts">
         <ul className="space-y-1 text-sm text-zinc-600">
           <li>Type: {EVENT_TYPE_LABELS[event.eventType]}</li>
@@ -86,6 +77,38 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
       {event.summary ? (
         <Card title="Recap">
           <p className="whitespace-pre-line text-sm text-zinc-700">{event.summary}</p>
+        </Card>
+      ) : null}
+
+      {event.galleryUrls.length > 0 ? (
+        <Card title="Photos">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {event.galleryUrls.map((url) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0"
+                aria-label="Open photo in new tab"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt=""
+                  className="h-28 w-28 rounded-md object-cover ring-1 ring-zinc-200 transition hover:ring-brand-dusty sm:h-32 sm:w-32"
+                />
+              </a>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {event.transcript ? (
+        <Card title="Transcript">
+          <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700">
+            {event.transcript}
+          </p>
         </Card>
       ) : null}
 

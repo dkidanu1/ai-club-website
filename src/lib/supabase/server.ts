@@ -23,6 +23,8 @@ type DbEvent = {
   guest_company: string | null;
   summary: string | null;
   photo_url: string | null;
+  gallery_urls: string[] | null;
+  transcript: string | null;
 };
 
 function hasSupabaseEnv() {
@@ -54,6 +56,8 @@ function mapDbEvent(event: DbEvent): EventRecord {
     status: event.status,
     summary: event.summary,
     photoUrl: event.photo_url,
+    galleryUrls: event.gallery_urls ?? [],
+    transcript: event.transcript,
   };
 }
 
@@ -68,7 +72,7 @@ export async function getPublishedEvents(): Promise<EventRecord[]> {
   const { data, error } = await client
     .from("events")
     .select(
-      "id,title,starts_at,ends_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status,guest_name,guest_company,summary,photo_url"
+      "id,title,starts_at,ends_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status,guest_name,guest_company,summary,photo_url,gallery_urls,transcript"
     )
     .in("status", ["published", "past", "cancelled"])
     .order("starts_at", { ascending: true });
@@ -93,7 +97,7 @@ export async function getUpcomingEvents(limit = 5): Promise<EventRecord[]> {
   const { data, error } = await client
     .from("events")
     .select(
-      "id,title,starts_at,ends_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status,guest_name,guest_company,summary,photo_url"
+      "id,title,starts_at,ends_at,location,rsvp_count,capacity,rsvp_url,event_type,description_md,agenda,status,guest_name,guest_company,summary,photo_url,gallery_urls,transcript"
     )
     .in("status", ["published", "past", "cancelled"])
     .gte("starts_at", new Date().toISOString())
@@ -119,6 +123,8 @@ export type AdminEventRecord = {
   guestCompany: string | null;
   summary: string | null;
   photoUrl: string | null;
+  galleryUrls: string[];
+  transcript: string | null;
 };
 
 export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
@@ -138,6 +144,8 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
       guestCompany: event.guestCompany,
       summary: event.summary,
       photoUrl: event.photoUrl,
+      galleryUrls: event.galleryUrls,
+      transcript: event.transcript,
     }));
   }
 
@@ -149,7 +157,7 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
   const { data, error } = await client
     .from("events")
     .select(
-      "id,title,starts_at,ends_at,location,event_type,status,rsvp_count,capacity,rsvp_url,description_md,agenda,guest_name,guest_company,summary,photo_url"
+      "id,title,starts_at,ends_at,location,event_type,status,rsvp_count,capacity,rsvp_url,description_md,agenda,guest_name,guest_company,summary,photo_url,gallery_urls,transcript"
     )
     .order("starts_at", { ascending: false });
 
@@ -174,6 +182,8 @@ export async function getEventsForAdmin(): Promise<AdminEventRecord[]> {
     guestCompany: event.guest_company,
     summary: event.summary,
     photoUrl: event.photo_url,
+    galleryUrls: event.gallery_urls ?? [],
+    transcript: event.transcript,
   }));
 }
 
@@ -240,6 +250,193 @@ export type AdminMemberRecord = {
   officerTitle: string | null;
   displayOrder: number;
 };
+
+export type AdminDashboardStats = {
+  membersCount: number;
+  upcomingEventsCount: number;
+  nextEventLabel: string | null;
+  libraryItemsCount: number;
+  newLibraryThisWeek: number;
+  activePerksCount: number;
+  perksExpiringSoonCount: number;
+};
+
+export type AttentionItem = {
+  id: string;
+  text: string;
+  href?: string;
+};
+
+export async function getAdminDashboardData(): Promise<{
+  stats: AdminDashboardStats;
+  attention: AttentionItem[];
+}> {
+  const fallback: AdminDashboardStats = {
+    membersCount: 0,
+    upcomingEventsCount: 0,
+    nextEventLabel: null,
+    libraryItemsCount: 0,
+    newLibraryThisWeek: 0,
+    activePerksCount: 0,
+    perksExpiringSoonCount: 0,
+  };
+  if (!hasSupabaseEnv()) return { stats: fallback, attention: [] };
+
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    getSupabasePublicKey() as string
+  );
+  const nowIso = new Date().toISOString();
+  const weekAgoIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const in30dIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [
+    membersHead,
+    upcomingHead,
+    nextEvent,
+    libraryHead,
+    libraryNewHead,
+    perksHead,
+    perksExpiringHead,
+    draftEvents,
+    draftLibrary,
+    expiringPerks,
+    pastEventsForRecap,
+  ] = await Promise.all([
+    client.from("members").select("*", { count: "exact", head: true }),
+    client
+      .from("events")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "published")
+      .gte("starts_at", nowIso),
+    client
+      .from("events")
+      .select("title,starts_at")
+      .eq("status", "published")
+      .gte("starts_at", nowIso)
+      .order("starts_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    client
+      .from("library_items")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "published"),
+    client
+      .from("library_items")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "published")
+      .gte("published_at", weekAgoIso),
+    client
+      .from("perks")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["active", "expiring"]),
+    client
+      .from("perks")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "expiring"),
+    client.from("events").select("id,title").eq("status", "draft"),
+    client.from("library_items").select("id,title,type").eq("status", "draft"),
+    client
+      .from("perks")
+      .select("id,partner_name,expires_at,status")
+      .or(`status.eq.expiring,and(expires_at.gte.${nowIso},expires_at.lte.${in30dIso})`),
+    // Past published events missing recap materials.
+    client
+      .from("events")
+      .select("id,title,starts_at,photo_url,gallery_urls,transcript")
+      .in("status", ["published", "past"])
+      .lt("starts_at", nowIso),
+  ]);
+
+  const pastEventsNeedingRecap = pastEventsForRecap;
+
+  const stats: AdminDashboardStats = {
+    membersCount: membersHead.count ?? 0,
+    upcomingEventsCount: upcomingHead.count ?? 0,
+    nextEventLabel: nextEvent.data
+      ? `${(nextEvent.data as { title: string }).title} · ${new Date(
+          (nextEvent.data as { starts_at: string }).starts_at
+        ).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })}`
+      : null,
+    libraryItemsCount: libraryHead.count ?? 0,
+    newLibraryThisWeek: libraryNewHead.count ?? 0,
+    activePerksCount: perksHead.count ?? 0,
+    perksExpiringSoonCount: perksExpiringHead.count ?? 0,
+  };
+
+  const attention: AttentionItem[] = [];
+  for (const e of (draftEvents.data ?? []) as Array<{ id: string; title: string }>) {
+    attention.push({
+      id: `event-draft:${e.id}`,
+      text: `Event "${e.title}" is still a draft.`,
+      href: "/admin/events",
+    });
+  }
+  for (const l of (draftLibrary.data ?? []) as Array<{
+    id: string;
+    title: string;
+    type: string;
+  }>) {
+    attention.push({
+      id: `library-draft:${l.id}`,
+      text: `Library ${l.type} "${l.title}" is still a draft.`,
+      href: "/admin/library",
+    });
+  }
+  for (const p of (expiringPerks.data ?? []) as Array<{
+    id: string;
+    partner_name: string;
+    expires_at: string | null;
+  }>) {
+    const when = p.expires_at
+      ? ` (expires ${new Date(p.expires_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })})`
+      : "";
+    attention.push({
+      id: `perk-expiring:${p.id}`,
+      text: `Perk "${p.partner_name}" is expiring soon${when}.`,
+      href: "/admin/perks",
+    });
+  }
+
+  for (const e of (pastEventsNeedingRecap.data ?? []) as Array<{
+    id: string;
+    title: string;
+    starts_at: string;
+    photo_url: string | null;
+    gallery_urls: string[] | null;
+    transcript: string | null;
+  }>) {
+    const dateLabel = new Date(e.starts_at).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const hasPhoto = Boolean(e.photo_url) || (e.gallery_urls?.length ?? 0) > 0;
+    if (!hasPhoto) {
+      attention.push({
+        id: `event-missing-photo:${e.id}`,
+        text: `Past event "${e.title}" (${dateLabel}) is missing photos.`,
+        href: "/admin/events",
+      });
+    }
+    if (!e.transcript || !e.transcript.trim()) {
+      attention.push({
+        id: `event-missing-transcript:${e.id}`,
+        text: `Past event "${e.title}" (${dateLabel}) is missing a transcript.`,
+        href: "/admin/events",
+      });
+    }
+  }
+
+  return { stats, attention };
+}
 
 export async function getMembersForAdmin(): Promise<AdminMemberRecord[]> {
   if (!hasSupabaseEnv()) return [];
@@ -423,6 +620,8 @@ type DbSiteSettings = {
   discord_url: string | null;
   instagram_handle: string | null;
   calendar_feed_url: string | null;
+  featured_headline: string | null;
+  featured_url: string | null;
   stats:
     | {
         members?: number;
@@ -444,7 +643,7 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
   const { data, error } = await client
     .from("site_settings")
     .select(
-      "id,headline,tagline,mission_md,email,discord_url,instagram_handle,calendar_feed_url,stats"
+      "id,headline,tagline,mission_md,email,discord_url,instagram_handle,calendar_feed_url,featured_headline,featured_url,stats"
     )
     .limit(1)
     .maybeSingle();
@@ -460,6 +659,8 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
     discordUrl: row.discord_url ?? fallbackSiteSettings.discordUrl,
     instagramHandle: row.instagram_handle ?? fallbackSiteSettings.instagramHandle,
     calendarFeedUrl: row.calendar_feed_url ?? fallbackSiteSettings.calendarFeedUrl,
+    featuredHeadline: row.featured_headline,
+    featuredUrl: row.featured_url,
     stats: {
       members: row.stats?.members ?? fallbackSiteSettings.stats.members,
       events: row.stats?.events ?? fallbackSiteSettings.stats.events,

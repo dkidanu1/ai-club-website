@@ -26,6 +26,8 @@ export type EventRecord = {
   status: EventStatus;
   summary: string | null;
   photoUrl: string | null;
+  galleryUrls: string[];
+  transcript: string | null;
 };
 
 export const fallbackEvents: EventRecord[] = [
@@ -44,6 +46,8 @@ export const fallbackEvents: EventRecord[] = [
     status: "published",
     summary: null,
     photoUrl: null,
+    galleryUrls: [],
+    transcript: null,
     eventType: "talk",
     description:
       "On building visual intelligence, from ImageNet to embodied agents.",
@@ -68,6 +72,8 @@ export const fallbackEvents: EventRecord[] = [
     status: "published",
     summary: null,
     photoUrl: null,
+    galleryUrls: [],
+    transcript: null,
     eventType: "hack",
     description: "Build and demo practical agent workflows in teams.",
     agenda: [
@@ -91,6 +97,8 @@ export const fallbackEvents: EventRecord[] = [
     status: "published",
     summary: null,
     photoUrl: null,
+    galleryUrls: [],
+    transcript: null,
     eventType: "reading",
     description: "Discuss key RLHF papers and practical takeaways.",
     agenda: [

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #55251d;
+  --background: #f2f4f3;
+  --foreground: #594157;
 }
 
 @theme inline {
@@ -12,24 +12,33 @@
   --font-mono: var(--font-geist-mono);
 
   /* Brand palette */
-  --color-brand-purple: #9f87af;
-  --color-brand-peach: #ffd5c2;
-  --color-brand-brown: #55251d;
-  --color-brand-red: #5a1807;
+  --color-brand-vintage: #594157;   /* deep grape — primary text + CTA */
+  --color-brand-dusty: #726da8;     /* mid grape — accent / hover */
+  --color-brand-smoke: #f2f4f3;     /* page bg */
+  --color-brand-glaucous: #7d8cc4;  /* soft blue-purple — secondary */
+  --color-brand-teal: #496f5d;      /* deep teal — positive accent */
 
-  /* Remap the zinc scale used across the codebase to the brand palette.
-     Lighter steps lean peach, darker steps lean brown. The CTA shade
-     (zinc-900) is the deep red. */
-  --color-zinc-50: #fdf3ec;
-  --color-zinc-100: #ffd5c2;
-  --color-zinc-200: #f3c5b2;
-  --color-zinc-300: #d6a294;
-  --color-zinc-400: #b07a6a;
-  --color-zinc-500: #8a5446;
-  --color-zinc-600: #6e3a2e;
-  --color-zinc-700: #5c2c22;
-  --color-zinc-800: #55251d;
-  --color-zinc-900: #5a1807;
+  /* Remap the zinc scale used across the codebase to the new palette.
+     Lighter steps lean cool white-smoke; mid steps lean glaucous;
+     darker steps lean vintage grape so primary text reads deep purple. */
+  --color-zinc-50: #f2f4f3;
+  --color-zinc-100: #e6e8ee;
+  --color-zinc-200: #d2d6e1;
+  --color-zinc-300: #b5bbd0;
+  --color-zinc-400: #8c92ab;
+  --color-zinc-500: #6f6f8a;
+  --color-zinc-600: #5b5670;
+  --color-zinc-700: #4a3f59;
+  --color-zinc-800: #3d3148;
+  --color-zinc-900: #594157;
+
+  /* Override the emerald success colour so it lands on deep teal. Keep red
+     and amber as their semantic defaults (validation messages need to read
+     as warnings, not as palette accents). */
+  --color-emerald-50: #e9f0ec;
+  --color-emerald-100: #d2e1d8;
+  --color-emerald-700: #496f5d;
+  --color-emerald-800: #3d5d4f;
 }
 
 body {

@@ -47,14 +47,21 @@ export default async function RootLayout({
         className="min-h-full flex flex-col bg-zinc-50 text-zinc-900"
         suppressHydrationWarning
       >
-        <header className="border-b border-zinc-200 bg-white">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4">
-            <Link href="/" className="text-lg font-semibold tracking-tight">
-              AI Club
+        <header className="border-b border-zinc-200/70 bg-white/80 backdrop-blur">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
+            <Link
+              href="/"
+              className="text-lg font-semibold tracking-tight text-brand-vintage"
+            >
+              Stanford GSB AI Club
             </Link>
-            <nav className="flex items-center gap-4 text-sm font-medium">
+            <nav className="flex items-center gap-6 text-sm font-medium text-zinc-700">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className="hover:underline">
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="transition hover:text-brand-dusty"
+                >
                   {item.label}
                 </Link>
               ))}
@@ -66,15 +73,15 @@ export default async function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 space-y-4 px-4 py-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 space-y-8 px-6 py-12 sm:py-16">
           <Suspense fallback={null}>
             <AuthBanner />
           </Suspense>
           {children}
         </main>
-        <footer className="border-t border-zinc-200 bg-white">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 AI Club</p>
+        <footer className="border-t border-zinc-200/70 bg-white">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 py-8 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
+            <p>© 2026 Stanford GSB AI Club</p>
             <p>hello@aiclub · discord.gg/aiclub · @stanford.aiclub</p>
           </div>
         </footer>

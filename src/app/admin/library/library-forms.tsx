@@ -7,13 +7,91 @@ import {
   createVideoItemAction,
   deleteLibraryItemAction,
   refetchArticleOgAction,
+  updateFeaturedHeadlineAction,
   updateLibraryItemAction,
   updateLibraryItemStatusAction,
 } from "@/app/admin/library/actions";
 import { initialActionState, type ActionState } from "@/app/admin/library/types";
-import type { LibraryItemRecord } from "@/lib/library";
+import {
+  resolveLibraryItemThumbnail,
+  type LibraryItemRecord,
+} from "@/lib/library";
 
 type Disabled = { disabled: boolean };
+
+type FeaturedProps = {
+  disabled: boolean;
+  initialHeadline: string | null;
+  initialUrl: string | null;
+};
+
+export function FeaturedHeadlineForm({
+  disabled,
+  initialHeadline,
+  initialUrl,
+}: FeaturedProps) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(
+    updateFeaturedHeadlineAction,
+    initialActionState
+  );
+  const fieldError = (name: string) => state.fieldErrors?.[name];
+  const formKey = `${initialHeadline ?? ""}|${initialUrl ?? ""}`;
+
+  return (
+    <form key={formKey} action={action} className="grid gap-2 md:grid-cols-2">
+      <div className="md:col-span-2 flex flex-col gap-1">
+        <label className="text-[11px] font-medium text-zinc-600">
+          Headline
+        </label>
+        <input
+          name="featuredHeadline"
+          defaultValue={initialHeadline ?? ""}
+          placeholder="What's the headline for the day?"
+          disabled={disabled || pending}
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:bg-zinc-100"
+        />
+        <p className="text-[11px] text-zinc-500">
+          Leave blank to hide the Featured card on the home page.
+        </p>
+      </div>
+
+      <div className="md:col-span-2 flex flex-col gap-1">
+        <label className="text-[11px] font-medium text-zinc-600">
+          Link URL (optional)
+        </label>
+        <input
+          name="featuredUrl"
+          defaultValue={initialUrl ?? ""}
+          placeholder="https://..."
+          disabled={disabled || pending}
+          aria-invalid={Boolean(fieldError("featuredUrl"))}
+          className="rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:bg-zinc-100 aria-[invalid=true]:border-red-500"
+        />
+        {fieldError("featuredUrl") ? (
+          <p className="text-xs text-red-600">{fieldError("featuredUrl")}</p>
+        ) : null}
+      </div>
+
+      <button
+        disabled={disabled || pending}
+        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {pending ? "Saving…" : "Save headline"}
+      </button>
+
+      {state.error ? (
+        <p role="alert" className="md:col-span-2 text-sm text-red-600">
+          {state.error}
+        </p>
+      ) : null}
+      {state.ok ? (
+        <p role="status" className="md:col-span-2 text-sm text-emerald-700">
+          Headline saved.
+        </p>
+      ) : null}
+    </form>
+  );
+}
 
 export function CreateArticleForm({ disabled }: Disabled) {
   const [state, action, pending] = useActionState<ActionState, FormData>(
@@ -200,13 +278,15 @@ export function LibraryItemRow({
   // reset can't snap inputs back to stale defaultValue props.
   const editFormKey = `${item.id}|${item.title}|${item.externalUrl ?? ""}|${item.imageUrl ?? ""}|${item.sourceName ?? ""}|${item.excerpt}|${item.tags.join(",")}`;
 
+  const thumb = resolveLibraryItemThumbnail(item.imageUrl, item.externalUrl);
+
   return (
     <div className="rounded-md border border-zinc-200 p-3 text-sm">
       <div className="flex gap-3">
-        {item.imageUrl ? (
+        {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={item.imageUrl}
+            src={thumb}
             alt={item.title}
             className="h-14 w-20 shrink-0 rounded object-cover ring-1 ring-zinc-200"
           />

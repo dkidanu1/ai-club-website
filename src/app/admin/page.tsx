@@ -1,40 +1,60 @@
+import { AttentionList } from "@/app/admin/attention-list";
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { requireOfficer } from "@/lib/auth";
+import { getAdminDashboardData } from "@/lib/supabase/server";
 
-export default function AdminDashboardPage() {
+function firstName(fullName: string | null, email: string): string {
+  if (fullName && fullName.trim()) return fullName.trim().split(/\s+/)[0]!;
+  return email.split("@")[0]!;
+}
+
+export default async function AdminDashboardPage() {
+  const member = await requireOfficer();
+  const { stats, attention } = await getAdminDashboardData();
+  const name = firstName(member.full_name, member.email);
+
   return (
     <section className="space-y-4">
       <SectionHeader
         eyebrow="Admin / Dashboard"
-        title="Welcome back, Priya"
+        title={`Welcome back, ${name}`}
         description="Quick actions and high-level club operations metrics."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card title="Members">
-          <p className="text-2xl font-semibold">240</p>
-          <p className="text-sm text-zinc-600">+12 this week</p>
+          <p className="text-2xl font-semibold">{stats.membersCount}</p>
+          <p className="text-sm text-zinc-600">
+            Stanford accounts in the directory
+          </p>
         </Card>
         <Card title="Upcoming events">
-          <p className="text-2xl font-semibold">3</p>
-          <p className="text-sm text-zinc-600">Next: tonight at 6pm</p>
+          <p className="text-2xl font-semibold">{stats.upcomingEventsCount}</p>
+          <p className="text-sm text-zinc-600">
+            {stats.nextEventLabel ? `Next: ${stats.nextEventLabel}` : "Nothing scheduled"}
+          </p>
         </Card>
         <Card title="Library items">
-          <p className="text-2xl font-semibold">87</p>
-          <p className="text-sm text-zinc-600">+4 this week</p>
+          <p className="text-2xl font-semibold">{stats.libraryItemsCount}</p>
+          <p className="text-sm text-zinc-600">
+            {stats.newLibraryThisWeek > 0
+              ? `+${stats.newLibraryThisWeek} this week`
+              : "Published articles + videos"}
+          </p>
         </Card>
         <Card title="Active perks">
-          <p className="text-2xl font-semibold">12</p>
-          <p className="text-sm text-zinc-600">2 expiring in &lt;30d</p>
+          <p className="text-2xl font-semibold">{stats.activePerksCount}</p>
+          <p className="text-sm text-zinc-600">
+            {stats.perksExpiringSoonCount > 0
+              ? `${stats.perksExpiringSoonCount} expiring soon`
+              : "Currently available"}
+          </p>
         </Card>
       </div>
 
       <Card title="Needs your attention">
-        <ul className="space-y-2 text-sm text-zinc-600">
-          <li>Fireside event is missing Zoom link.</li>
-          <li>Apr 24 transcript is ready to review and publish.</li>
-          <li>Cursor partner perk expires in 3 days.</li>
-        </ul>
+        <AttentionList items={attention} />
       </Card>
     </section>
   );

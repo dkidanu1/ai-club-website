@@ -6,6 +6,8 @@ export type SiteSettingsRecord = {
   discordUrl: string;
   instagramHandle: string;
   calendarFeedUrl: string;
+  featuredHeadline: string | null;
+  featuredUrl: string | null;
   stats: {
     members: number;
     events: number;
@@ -23,6 +25,8 @@ export const fallbackSiteSettings: SiteSettingsRecord = {
   discordUrl: "discord.gg/aiclub",
   instagramHandle: "@stanford.aiclub",
   calendarFeedUrl: "ical://...",
+  featuredHeadline: null,
+  featuredUrl: null,
   stats: {
     members: 240,
     events: 38,

@@ -14,7 +14,7 @@ export function JoinClubButton({ isSignedIn, authEnabled }: Props) {
 
   if (isSignedIn) {
     return (
-      <span className="rounded-md border border-zinc-300 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700">
+      <span className="rounded-full border border-zinc-200 bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-700">
         You&apos;re a member
       </span>
     );
@@ -47,9 +47,9 @@ export function JoinClubButton({ isSignedIn, authEnabled }: Props) {
       type="button"
       onClick={handleJoin}
       disabled={pending || !authEnabled}
-      className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-full bg-brand-vintage px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-dusty disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "Redirecting…" : "Join the club"}
+      {pending ? "Redirecting…" : "Join the club →"}
     </button>
   );
 }

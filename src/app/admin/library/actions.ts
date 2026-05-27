@@ -97,6 +97,46 @@ function revalidateLibrarySurfaces() {
   revalidatePath("/");
 }
 
+export async function updateFeaturedHeadlineAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requireOfficer();
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "Supabase is not configured." };
+
+  const headline = String(formData.get("featuredHeadline") ?? "").trim();
+  const url = String(formData.get("featuredUrl") ?? "").trim();
+
+  if (url && !isHttpUrl(url)) {
+    return {
+      ok: false,
+      fieldErrors: { featuredUrl: "Must be a valid http(s) URL." },
+    };
+  }
+
+  // site_settings is a single-row table; saveSiteSettingsAction uses
+  // id='default-site-settings'. Match that id so we update the same row.
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert(
+      {
+        id: "default-site-settings",
+        featured_headline: headline || null,
+        featured_url: url || null,
+      },
+      { onConflict: "id" }
+    );
+
+  if (error) {
+    console.error("updateFeaturedHeadlineAction failed:", error);
+    return { ok: false, error: `Failed to save: ${error.message}` };
+  }
+  revalidatePath("/");
+  revalidatePath("/admin/library");
+  return { ok: true };
+}
+
 export async function createArticleItemAction(
   _prev: ActionState,
   formData: FormData

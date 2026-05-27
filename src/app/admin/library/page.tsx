@@ -3,13 +3,20 @@ import { SectionHeader } from "@/components/section-header";
 import {
   CreateArticleForm,
   CreateVideoForm,
+  FeaturedHeadlineForm,
   LibraryItemRow,
 } from "@/app/admin/library/library-forms";
 import { hasSupabasePublicEnv } from "@/lib/supabase/env";
-import { getLibraryItemsForAdmin } from "@/lib/supabase/server";
+import {
+  getLibraryItemsForAdmin,
+  getSiteSettings,
+} from "@/lib/supabase/server";
 
 export default async function AdminLibraryPage() {
-  const items = await getLibraryItemsForAdmin();
+  const [items, settings] = await Promise.all([
+    getLibraryItemsForAdmin(),
+    getSiteSettings(),
+  ]);
   const isSupabaseConfigured = hasSupabasePublicEnv();
 
   const articles = items.filter((item) => item.type === "article");
@@ -30,6 +37,14 @@ export default async function AdminLibraryPage() {
           </p>
         </Card>
       ) : null}
+
+      <Card title="Featured headline (home page)">
+        <FeaturedHeadlineForm
+          disabled={!isSupabaseConfigured}
+          initialHeadline={settings.featuredHeadline}
+          initialUrl={settings.featuredUrl}
+        />
+      </Card>
 
       <Card title="Add article">
         <CreateArticleForm disabled={!isSupabaseConfigured} />

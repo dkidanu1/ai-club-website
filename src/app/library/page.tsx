@@ -1,7 +1,8 @@
 import { Card } from "@/components/card";
 import { SectionHeader } from "@/components/section-header";
+import { VideoPlayerCard } from "@/app/library/video-player-card";
 import { requireMember } from "@/lib/auth";
-import { getVideoEmbed, type LibraryItemRecord } from "@/lib/library";
+import { type LibraryItemRecord } from "@/lib/library";
 import { getPublishedLibraryItems } from "@/lib/supabase/server";
 
 function ArticleCard({ item }: { item: LibraryItemRecord }) {
@@ -44,50 +45,6 @@ function ArticleCard({ item }: { item: LibraryItemRecord }) {
   );
 }
 
-function VideoCard({ item }: { item: LibraryItemRecord }) {
-  const embed = item.externalUrl ? getVideoEmbed(item.externalUrl) : null;
-  return (
-    <div className="overflow-hidden rounded-md border border-zinc-200 bg-white">
-      {embed ? (
-        <div className="aspect-video w-full">
-          <iframe
-            src={embed.embedUrl}
-            title={item.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="h-full w-full"
-          />
-        </div>
-      ) : (
-        <div className="grid aspect-video w-full place-items-center bg-zinc-100 text-sm text-zinc-600">
-          Video unavailable
-          {item.externalUrl ? (
-            <a
-              href={item.externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-2 text-zinc-700 hover:underline"
-            >
-              Open externally →
-            </a>
-          ) : null}
-        </div>
-      )}
-      <div className="p-3">
-        <h3 className="font-medium text-zinc-900">{item.title}</h3>
-        {item.excerpt ? (
-          <p className="mt-1 line-clamp-3 text-sm text-zinc-600">{item.excerpt}</p>
-        ) : null}
-        {item.tags.length > 0 ? (
-          <p className="mt-2 text-[11px] text-zinc-500">
-            {item.tags.map((t) => `#${t}`).join(" ")}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
 export default async function LibraryPage() {
   await requireMember();
   const items = await getPublishedLibraryItems();
@@ -122,7 +79,7 @@ export default async function LibraryPage() {
           ) : (
             <div className="grid gap-3">
               {videos.map((item) => (
-                <VideoCard key={item.id} item={item} />
+                <VideoPlayerCard key={item.id} item={item} />
               ))}
             </div>
           )}

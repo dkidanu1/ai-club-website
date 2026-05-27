@@ -25,27 +25,6 @@ function parseDateTime(value: string): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-function parseAgendaJson(value: string):
-  | { ok: true; agenda: Array<{ time: string; item: string }> }
-  | { ok: false } {
-  if (!value.trim()) return { ok: true, agenda: [] };
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    return { ok: false };
-  }
-  if (!Array.isArray(parsed)) return { ok: false };
-  const agenda = parsed
-    .filter((entry): entry is Record<string, unknown> => typeof entry === "object" && entry !== null)
-    .map((entry) => ({
-      time: String(entry.time ?? "").trim(),
-      item: String(entry.item ?? "").trim(),
-    }))
-    .filter((entry) => entry.time || entry.item);
-  return { ok: true, agenda };
-}
-
 function revalidateEventSurfaces() {
   revalidatePath("/admin/events");
   revalidatePath("/events");
@@ -145,11 +124,16 @@ export async function updateEventDetailsAction(
   const description = String(formData.get("description") ?? "").trim();
   const rsvpUrlRaw = String(formData.get("rsvpUrl") ?? "").trim();
   const eventTypeRaw = String(formData.get("eventType") ?? "talk");
-  const agendaJson = String(formData.get("agendaJson") ?? "");
   const guestName = String(formData.get("guestName") ?? "").trim();
   const guestCompany = String(formData.get("guestCompany") ?? "").trim();
   const summary = String(formData.get("summary") ?? "").trim();
   const photoUrl = String(formData.get("photoUrl") ?? "").trim();
+  const transcript = String(formData.get("transcript") ?? "").trim();
+  const galleryUrlsRaw = String(formData.get("galleryUrls") ?? "");
+  const galleryUrls = galleryUrlsRaw
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const fieldErrors: Record<string, string> = {};
   if (!id) return { ok: false, error: "Missing event id." };
@@ -170,11 +154,6 @@ export async function updateEventDetailsAction(
 
   if (!isEventType(eventTypeRaw)) fieldErrors.eventType = "Invalid event type.";
 
-  const agendaResult = parseAgendaJson(agendaJson);
-  if (!agendaResult.ok) {
-    fieldErrors.agendaJson = "Agenda must be valid JSON: an array of {time, item} objects.";
-  }
-
   if (Object.keys(fieldErrors).length > 0) return { ok: false, fieldErrors };
 
   const { error } = await supabase
@@ -187,11 +166,12 @@ export async function updateEventDetailsAction(
       event_type: eventTypeRaw as EventType,
       description_md: description || null,
       rsvp_url: rsvpUrlRaw || null,
-      agenda: agendaResult.ok ? agendaResult.agenda : [],
       guest_name: guestName || null,
       guest_company: guestCompany || null,
       summary: summary || null,
       photo_url: photoUrl || null,
+      gallery_urls: galleryUrls,
+      transcript: transcript || null,
     })
     .eq("id", id);
 
