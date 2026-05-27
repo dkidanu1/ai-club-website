@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f2f4f3;
+  --foreground: #594157;
 }
 
 @theme inline {
@@ -10,13 +10,35 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Brand palette */
+  --color-brand-vintage: #594157;   /* deep grape — primary text + CTA */
+  --color-brand-dusty: #726da8;     /* mid grape — accent / hover */
+  --color-brand-smoke: #f2f4f3;     /* page bg */
+  --color-brand-glaucous: #7d8cc4;  /* soft blue-purple — secondary */
+  --color-brand-teal: #496f5d;      /* deep teal — positive accent */
+
+  /* Remap the zinc scale used across the codebase to the new palette.
+     Lighter steps lean cool white-smoke; mid steps lean glaucous;
+     darker steps lean vintage grape so primary text reads deep purple. */
+  --color-zinc-50: #f2f4f3;
+  --color-zinc-100: #e6e8ee;
+  --color-zinc-200: #d2d6e1;
+  --color-zinc-300: #b5bbd0;
+  --color-zinc-400: #8c92ab;
+  --color-zinc-500: #6f6f8a;
+  --color-zinc-600: #5b5670;
+  --color-zinc-700: #4a3f59;
+  --color-zinc-800: #3d3148;
+  --color-zinc-900: #594157;
+
+  /* Override the emerald success colour so it lands on deep teal. Keep red
+     and amber as their semantic defaults (validation messages need to read
+     as warnings, not as palette accents). */
+  --color-emerald-50: #e9f0ec;
+  --color-emerald-100: #d2e1d8;
+  --color-emerald-700: #496f5d;
+  --color-emerald-800: #3d5d4f;
 }
 
 body {

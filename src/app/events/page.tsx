@@ -1,48 +1,34 @@
-const upcomingEvents = [
-  {
-    title: "Fireside chat — Dr. Fei-Fei Li",
-    meta: "Tue, May 5 · 6:00 PM · Gates B01 + Zoom",
-  },
-  {
-    title: "Hack night: building agents",
-    meta: "Fri, May 9 · 4:00 PM · Huang Center",
-  },
-];
+import { SectionHeader } from "@/components/section-header";
+import { EventsList } from "@/app/events/events-list";
+import { getPublishedEvents } from "@/lib/supabase/server";
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const allEvents = await getPublishedEvents();
+  const now = new Date().getTime();
+
+  const upcoming = allEvents.filter(
+    (event) => new Date(event.startsAt).getTime() >= now
+  );
+  // Past = explicitly marked past, OR a published/cancelled event whose start
+  // is in the past. Newest first for the past list.
+  const past = allEvents
+    .filter((event) => {
+      const t = new Date(event.startsAt).getTime();
+      return event.status === "past" || t < now;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime()
+    );
+
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Events</h1>
-        <p className="mt-2 text-zinc-600">
-          Upcoming and past events with details, agenda, and RSVP links.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {["All", "Talks", "Hack nights", "Reading group", "Socials"].map(
-          (filter) => (
-            <span
-              key={filter}
-              className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm"
-            >
-              {filter}
-            </span>
-          )
-        )}
-      </div>
-
-      <div className="space-y-3">
-        {upcomingEvents.map((event) => (
-          <article
-            key={event.title}
-            className="rounded-xl border border-zinc-200 bg-white p-4"
-          >
-            <h2 className="font-semibold">{event.title}</h2>
-            <p className="text-sm text-zinc-600">{event.meta}</p>
-          </article>
-        ))}
-      </div>
+      <SectionHeader
+        title="Events"
+        description="What's on, and what we've already done."
+        eyebrow="Events"
+      />
+      <EventsList upcoming={upcoming} past={past} />
     </section>
   );
 }
