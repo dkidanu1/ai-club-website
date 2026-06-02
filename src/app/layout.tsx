@@ -30,6 +30,7 @@ export default async function RootLayout({
 }>) {
   const member = await getCurrentMember();
   const authEnabled = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_AUTH === "true";
+  const isAdmin = member?.role === "officer" || member?.role === "president";
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/events", label: "Events" },
@@ -65,6 +66,14 @@ export default async function RootLayout({
                   {item.label}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="rounded-md bg-brand-vintage px-3 py-1.5 font-semibold text-white transition hover:bg-brand-dusty"
+                >
+                  Admin
+                </Link>
+              )}
               <AuthButton
                 isSignedIn={Boolean(member)}
                 label={member?.full_name?.split(" ")[0] ?? null}
