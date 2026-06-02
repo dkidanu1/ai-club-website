@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 
 function isCategory(value: string): value is "api" | "compute" | "tools" | "learning" {
   return ["api", "compute", "tools", "learning"].includes(value);
@@ -13,7 +13,7 @@ function isStatus(value: string): value is "active" | "expiring" | "archived" {
 }
 
 export async function createPerkAction(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return;
 
   const partnerName = String(formData.get("partnerName") ?? "").trim();
@@ -46,7 +46,7 @@ export async function createPerkAction(formData: FormData) {
 }
 
 export async function updatePerkStatusAction(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return;
 
   const id = String(formData.get("id") ?? "");

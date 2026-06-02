@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 
 function toNumberOr(value: string, fallback: number): number {
   const num = Number(value);
@@ -10,7 +10,7 @@ function toNumberOr(value: string, fallback: number): number {
 }
 
 export async function saveSiteSettingsAction(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return;
 
   const headline = String(formData.get("headline") ?? "").trim();

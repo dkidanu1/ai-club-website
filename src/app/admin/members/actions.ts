@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireOfficer } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import type { ActionState } from "@/app/admin/members/types";
 
 const ROLES = ["member", "officer", "president"] as const;
@@ -38,7 +38,7 @@ export async function createMemberAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -83,7 +83,7 @@ export async function updateMemberAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
@@ -130,7 +130,7 @@ export async function deleteMemberAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");

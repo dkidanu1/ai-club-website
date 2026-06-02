@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireOfficer } from "@/lib/auth";
 import { getVideoEmbed } from "@/lib/library";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import type { ActionState } from "@/app/admin/library/types";
 
 function parseTags(value: string): string[] {
@@ -102,7 +102,7 @@ export async function updateFeaturedHeadlineAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const headline = String(formData.get("featuredHeadline") ?? "").trim();
@@ -142,7 +142,7 @@ export async function createArticleItemAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const title = String(formData.get("title") ?? "").trim();
@@ -184,7 +184,7 @@ export async function createVideoItemAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const title = String(formData.get("title") ?? "").trim();
@@ -225,7 +225,7 @@ export async function updateLibraryItemAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
@@ -280,7 +280,7 @@ export async function refetchArticleOgAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
@@ -310,7 +310,7 @@ export async function updateLibraryItemStatusAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
@@ -341,7 +341,7 @@ export async function deleteLibraryItemAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
