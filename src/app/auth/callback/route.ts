@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 
 const ALLOWED_DOMAIN = "stanford.edu";
 
@@ -43,18 +44,27 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/?auth_error=domain`);
   }
 
-  const { error: upsertError } = await supabase.from("members").upsert(
-    {
-      email: user.email,
-      full_name: user.user_metadata?.full_name ?? null,
-      avatar_url: user.user_metadata?.avatar_url ?? null,
-      last_seen_at: new Date().toISOString(),
-    },
-    { onConflict: "email" }
-  );
-  if (upsertError) {
-    console.error("Member upsert failed:", upsertError);
-    // Continue — they're authenticated even if the row write hiccupped.
+  // Provisioning the member row is a privileged write: with RLS enabled the
+  // anon/cookie client cannot insert into `members`. Use the secret-key admin
+  // client (bypasses RLS) for this upsert only — auth itself stays on the
+  // cookie-backed client above.
+  const admin = createSupabaseAdminClient();
+  if (!admin) {
+    console.error("Member upsert skipped: SUPABASE_SECRET_KEY is not configured.");
+  } else {
+    const { error: upsertError } = await admin.from("members").upsert(
+      {
+        email: user.email,
+        full_name: user.user_metadata?.full_name ?? null,
+        avatar_url: user.user_metadata?.avatar_url ?? null,
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: "email" }
+    );
+    if (upsertError) {
+      console.error("Member upsert failed:", upsertError);
+      // Continue — they're authenticated even if the row write hiccupped.
+    }
   }
 
   return NextResponse.redirect(`${origin}${next}`);

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireOfficer } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 import type { ActionState } from "@/app/admin/events/types";
 
 const EVENT_TYPES = ["talk", "hack", "reading", "social"] as const;
@@ -36,7 +36,7 @@ export async function createEventAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const title = String(formData.get("title") ?? "").trim();
@@ -90,7 +90,7 @@ export async function updateEventStatusAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
@@ -113,7 +113,7 @@ export async function updateEventDetailsAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
@@ -189,7 +189,7 @@ export async function deleteEventAction(
   formData: FormData
 ): Promise<ActionState> {
   await requireOfficer();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   if (!supabase) return { ok: false, error: "Supabase is not configured." };
 
   const id = String(formData.get("id") ?? "");
