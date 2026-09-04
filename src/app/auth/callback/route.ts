@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseCallbackClient } from "@/lib/supabase/server-client";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin-client";
 
 const ALLOWED_DOMAIN = "stanford.edu";
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   if (!code) return NextResponse.redirect(`${origin}/?auth_error=missing_code`);
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseCallbackClient();
   if (!supabase) return NextResponse.redirect(`${origin}/?auth_error=not_configured`);
 
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
