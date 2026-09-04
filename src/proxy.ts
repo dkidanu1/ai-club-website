@@ -6,6 +6,24 @@ import { getSupabasePublicKey } from "@/lib/supabase/env";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Never run the session-refresh pass on the OAuth callback.
+  //
+  // supabase.auth.getUser() calls auth-js's _removeSession() whenever the
+  // session cookie it finds is missing, expired, or otherwise unrefreshable —
+  // and _removeSession() deletes `<storageKey>-code-verifier` along with the
+  // session cookie itself. On /auth/callback that code-verifier cookie is the
+  // one value exchangeCodeForSession() needs, so refreshing here deletes it
+  // before the route handler ever reads it. The result is a sign-in that dies
+  // with AuthPKCECodeVerifierMissingError ("PKCE code verifier not found in
+  // storage") for exactly the people carrying a stale session cookie: returning
+  // members whose refresh token has expired or was revoked.
+  //
+  // The callback route builds its own server client and writes the session
+  // cookies itself, so it needs nothing from this proxy.
+  if (request.nextUrl.pathname.startsWith("/auth/")) {
+    return response;
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = getSupabasePublicKey();
   if (!url || !key) return response;
